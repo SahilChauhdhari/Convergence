@@ -1,0 +1,8 @@
+{
+  "name": "internal-messaging-root",
+  "private": true,
+  "scripts": {
+    "build": "cd client && npm install && npm run build",
+    "install-all": "cd client && npm install && cd ../server && npm install"
+  }
+}
