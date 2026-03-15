@@ -46,9 +46,27 @@ async function startServer() {
 
   // ... (Express setup)
   
+  const userSockets = new Map(); // userId -> socketId
+
+  // Serve static files for media attachments
+  // Use absolute path for uploads folder
+  const path = require('path');
+  app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
   // Socket.IO for real-time messaging
   io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}`);
+    
+    // Track online user
+    if (socket.data.userId) {
+      userSockets.set(socket.data.userId, socket.id);
+      // Broadcast that this user came online
+      io.emit('user_status', { userId: socket.data.userId, status: 'online' });
+    }
+
+    // Send the current online users to the newly connected user
+    const onlineUsers = Array.from(userSockets.keys());
+    socket.emit('online_users', onlineUsers);
 
     socket.on('join_room', (roomId) => {
       socket.join(roomId.toString());
@@ -70,6 +88,10 @@ async function startServer() {
 
     socket.on('disconnect', () => {
       console.log(`User disconnected: ${socket.id}`);
+      if (socket.data.userId) {
+        userSockets.delete(socket.data.userId);
+        io.emit('user_status', { userId: socket.data.userId, status: 'offline' });
+      }
     });
   });
 

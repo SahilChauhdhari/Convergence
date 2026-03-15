@@ -12,6 +12,18 @@ async function getDb() {
     });
     // Ensure foreign keys are enabled
     await dbInstance.exec('PRAGMA foreign_keys = ON');
+
+    // Create attachments table if it doesn't exist
+    await dbInstance.exec(`
+      CREATE TABLE IF NOT EXISTS attachments (
+        attachment_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        message_id    INTEGER NOT NULL,
+        uploader_id   INTEGER NOT NULL,
+        file_path     TEXT    NOT NULL,
+        file_size     INTEGER,
+        created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
   }
   return dbInstance;
 }

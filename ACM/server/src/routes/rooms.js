@@ -37,6 +37,44 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
+router.post('/dm', authMiddleware, async (req, res) => {
+  const { recipientId } = req.body;
+  if (!recipientId) return res.status(400).json({ error: 'Recipient ID required' });
+
+  try {
+    const db = await getDb();
+    const currentUserId = Number(req.user.id);
+    const recId = Number(recipientId);
+    // Sort IDs to always generate the same room name for the two users
+    const [id1, id2] = [currentUserId, recId].sort((a, b) => a - b);
+    const roomName = `DM-${id1}-${id2}`;
+
+    // Check if room already exists
+    let room = await db.get('SELECT * FROM rooms WHERE room_name = ?', [roomName]);
+
+    if (!room) {
+      // Create new DM room
+      const result = await db.run(`
+        INSERT INTO rooms (room_name, room_type, description, created_by) VALUES (?, 'direct', ?, ?)
+      `, [roomName, 'Direct Message', currentUserId]);
+      
+      room = await db.get('SELECT * FROM rooms WHERE room_id = ?', result.lastID);
+
+      // Add both users to room_members
+      await db.run('INSERT INTO room_members (room_id, user_id, member_role, can_post, can_invite) VALUES (?, ?, ?, ?, ?)',
+        [room.room_id, currentUserId, 'member', 1, 1]);
+      if (currentUserId !== recId) {
+        await db.run('INSERT INTO room_members (room_id, user_id, member_role, can_post, can_invite) VALUES (?, ?, ?, ?, ?)',
+          [room.room_id, recId, 'member', 1, 1]);
+      }
+    }
+
+    res.status(200).json({ id: room.room_id, name: room.room_name });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/my', authMiddleware, async (req, res) => {
   const role_level = req.user.role_level || 10;
 
@@ -105,6 +143,27 @@ router.delete('/:id/members/:userId', authMiddleware, async (req, res) => {
     }
   } catch(err) {
      res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete a room (soft-delete — marks is_active = 0)
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const db = await getDb();
+    const room = await db.get('SELECT * FROM rooms WHERE room_id = ?', [req.params.id]);
+
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+
+    // Allow deletion if creator OR admin (role_level >= 50)
+    const role_level = req.user.role_level || 10;
+    if (room.created_by !== req.user.id && role_level < 50) {
+      return res.status(403).json({ error: 'Only the room creator can delete this room' });
+    }
+
+    await db.run('UPDATE rooms SET is_active = 0 WHERE room_id = ?', [req.params.id]);
+    res.json({ message: 'Room deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

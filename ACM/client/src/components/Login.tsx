@@ -1,90 +1,141 @@
-import React from 'react';
-import { FormEvent } from 'react';
+import React, { useState, FormEvent } from 'react';
 
 interface LoginProps {
   onLogin: (token: string, user: any) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [username, setUsername] = React.useState('');
-  const [password, setPassword] = React.useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+
+  const fillTest = () => {
+    setUsername('testuser');
+    setPassword('password');
+  };
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
+    setError('');
+    setLoading(true);
     try {
-      const response = await fetch('/api/auth/login', {
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-
-      if (response.ok) {
-        const data = await response.json();
+      const data = await res.json();
+      if (res.ok) {
         onLogin(data.token, data.user);
       } else {
-        alert('Invalid credentials');
+        setError(data.error || 'Invalid credentials');
       }
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch {
+      setError('Server unreachable. Make sure the server is running.');
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md animate-fade-in">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-full mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
+    <div
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{ background: 'linear-gradient(135deg, #0a0a16 0%, #0f0f1e 50%, #130d24 100%)' }}
+    >
+      {/* Decorative blobs */}
+      <div className="absolute top-[-10%] left-[-5%] w-96 h-96 bg-[#6d28d9]/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-5%] w-96 h-96 bg-[#4c1d95]/20 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative w-full max-w-md mx-4">
+
+        {/* Card */}
+        <div
+          className="rounded-2xl p-8 shadow-2xl"
+          style={{
+            background: 'rgba(15,15,30,0.85)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(139,92,246,0.2)',
+          }}
+        >
+          {/* Logo + Branding */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#8b5cf6] to-[#4c1d95] flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-purple-900/40 mb-4">
+              A
+            </div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Aether Impact</h1>
+            <p className="text-slate-400 text-sm mt-1">Sign in to your workspace</p>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800">Welcome Back</h1>
-          <p className="text-gray-500 mt-2">Sign in to continue to ChatApp</p>
+
+          {/* Error banner */}
+          {error && (
+            <div className="mb-4 px-4 py-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm text-center">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Username */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                Username
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                placeholder="Enter your username"
+                required
+                autoFocus
+                className="w-full bg-[#1a1a2e] border border-slate-700/60 text-slate-200 placeholder-slate-500 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#8b5cf6] focus:ring-2 focus:ring-[#8b5cf6]/20 transition-all"
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                required
+                className="w-full bg-[#1a1a2e] border border-slate-700/60 text-slate-200 placeholder-slate-500 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#8b5cf6] focus:ring-2 focus:ring-[#8b5cf6]/20 transition-all"
+              />
+            </div>
+
+            {/* Sign In */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] hover:from-[#8b5cf6] hover:to-[#7c3aed] text-white font-semibold py-3 rounded-lg transition-all shadow-lg shadow-purple-900/30 hover:shadow-purple-900/50 hover:-translate-y-0.5 active:translate-y-0 mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Signing in…' : 'Sign In'}
+            </button>
+          </form>
+
+          {/* Test credentials hint */}
+          <div className="mt-6 rounded-lg bg-[#1a1a2e]/70 border border-slate-700/40 px-4 py-3 text-center">
+            <p className="text-xs text-slate-500 mb-2">Demo credentials</p>
+            <div className="flex items-center justify-center gap-3 text-xs font-mono">
+              <span className="text-slate-300">testuser</span>
+              <span className="text-slate-600">/</span>
+              <span className="text-slate-300">password</span>
+            </div>
+            <button
+              onClick={fillTest}
+              className="mt-2 text-[11px] text-[#8b5cf6] hover:text-[#a78bfa] underline underline-offset-2 transition-colors"
+            >
+              Click to autofill
+            </button>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 text-gray-800 placeholder-gray-400"
-              placeholder="Enter your username"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 text-gray-800 placeholder-gray-400"
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 px-4 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-          >
-            Sign In
-          </button>
-        </form>
-
-        <div className="mt-6 text-center text-sm text-gray-600">
-          <p>Don't have an account? Create one!</p>
-        </div>
+        <p className="text-center text-slate-600 text-xs mt-6">
+          © 2026 Aether Impact. All rights reserved.
+        </p>
       </div>
     </div>
   );

@@ -74,4 +74,49 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.get('/me', require('../middleware/auth'), async (req, res) => {
+  try {
+    const db = await getDb();
+    const user = await db.get(`
+      SELECT u.*, r.role_name, r.role_level 
+      FROM users u 
+      LEFT JOIN roles r ON u.role_id = r.role_id 
+      WHERE u.user_id = ?
+    `, [req.user.id]);
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    res.json({ 
+      id: user.user_id, 
+      username: user.username, 
+      role: user.role_name, 
+      role_level: user.role_level,
+      full_name: user.full_name 
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/search', require('../middleware/auth'), async (req, res) => {
+  const query = req.query.q;
+  if (!query) return res.json([]);
+
+  try {
+    const db = await getDb();
+    
+    const users = await db.all(`
+      SELECT user_id as id, username, full_name as name
+      FROM users 
+      WHERE username LIKE ? OR full_name LIKE ?
+      LIMIT 10
+    `, [`%${query}%`, `%${query}%`]);
+
+    // Don't return the calling user
+    res.json(users.filter(u => u.id !== req.user.id));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

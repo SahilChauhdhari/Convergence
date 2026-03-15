@@ -11,20 +11,41 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session
-    const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
-    
-    if (storedUser && token) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error('Failed to parse stored user', e);
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
+    const initApp = async () => {
+      const token = localStorage.getItem('token');
+      
+      if (token) {
+        try {
+          const res = await fetch('/api/auth/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          if (res.ok) {
+            const userData = await res.json();
+            const formattedUser: User = {
+              id: userData.id,
+              name: userData.full_name || userData.username,
+              avatar: `https://i.pravatar.cc/150?u=${userData.username}`,
+              email: userData.email || '',
+              role: userData.role_level >= 50 ? 'admin' : 'user',
+              role_level: userData.role_level
+            };
+            setUser(formattedUser);
+          } else {
+            // Invalid token
+            handleLogout();
+          }
+        } catch (e) {
+          console.error('Failed to authenticate session', e);
+          handleLogout();
+        }
+      } else {
+        handleLogout();
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+
+    initApp();
   }, []);
 
   const handleLogin = (token: string, userData: any) => {

@@ -16,6 +16,7 @@ export interface Attachment {
 export interface Message {
   id: number;
   room_id: number;
+  user_id: string | number;
   user_name: string;
   message: string;
   created_at: string;
