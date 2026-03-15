@@ -207,6 +207,12 @@ const MainChat: React.FC<MainChatProps> = ({ user, onLogout }) => {
     });
 
     return () => {
+      socket.off('online_users');
+      socket.off('user_status');
+      socket.off('new_message');
+      socket.off('message_deleted');
+      socket.off('room_updated');
+      socket.off('room_deleted');
       socket.disconnect();
     };
   }, []);
