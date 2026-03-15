@@ -7,7 +7,7 @@ let dbInstance = null;
 async function getDb() {
   if (!dbInstance) {
     dbInstance = await open({
-      filename: path.join(__dirname, '../../database.db'),
+      filename: process.env.DATABASE_PATH || path.join(__dirname, '../../database.db'),
       driver: sqlite3.Database
     });
     // Ensure foreign keys are enabled

@@ -8,7 +8,12 @@ const messagesRouter = require('./routes/messages');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "*",
+    methods: ["GET", "POST", "PUT", "DELETE"]
+  }
+});
 
 const jwt = require('jsonwebtoken');
 
@@ -26,7 +31,9 @@ io.use((socket, next) => {
   }
 });
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "*"
+}));
 app.use(express.json());
 
 app.use((req, res, next) => {
@@ -51,7 +58,8 @@ async function startServer() {
   // Serve static files for media attachments
   // Use absolute path for uploads folder
   const path = require('path');
-  app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+  const uploadsPath = process.env.UPLOADS_PATH || path.join(__dirname, '../uploads');
+  app.use('/uploads', express.static(uploadsPath));
 
   // Socket.IO for real-time messaging
   io.on('connection', (socket) => {
@@ -96,10 +104,14 @@ async function startServer() {
   });
 
   const PORT = process.env.PORT || 3001;
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
   });
 }
 
+startServer();
+  });
+}
+
 startServer().catch(console.error);
-
+
