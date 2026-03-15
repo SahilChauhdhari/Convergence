@@ -1,0 +1,1 @@
+const sqlite3 = require('sqlite3'); const bcrypt = require('bcryptjs'); const db = new sqlite3.Database('../database.db'); bcrypt.hash('password', 10).then(hash => { db.run('UPDATE users SET password_hash = ? WHERE username = \'testuser\'', hash, (err) => { if(err) console.error(err); else console.log('Updated testuser to password in ../database.db'); db.close(); }); });
