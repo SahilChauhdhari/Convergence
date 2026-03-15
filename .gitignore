@@ -1,6 +1,5 @@
 # Dependency directories (CRITICAL: prevents ELF header errors)
-node_modules/
-jspm_packages/
+server/node_modules/
 
 # Debug logs
 npm-debug.log*
