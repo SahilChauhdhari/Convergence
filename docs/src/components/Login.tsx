@@ -12,7 +12,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [loading, setLoading]   = useState(false);
 
   const fillTest = () => {
-    setUsername('testuser');
+    setUsername('rajesh.sharma');
     setPassword('password');
   };
 
@@ -121,7 +121,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="mt-6 rounded-lg bg-[#1a1a2e]/70 border border-slate-700/40 px-4 py-3 text-center">
             <p className="text-xs text-slate-500 mb-2">Demo credentials</p>
             <div className="flex items-center justify-center gap-3 text-xs font-mono">
-              <span className="text-slate-300">testuser</span>
+              <span className="text-slate-300">rajesh.sharma</span>
               <span className="text-slate-600">/</span>
               <span className="text-slate-300">password</span>
             </div>
